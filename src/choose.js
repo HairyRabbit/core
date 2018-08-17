@@ -4,27 +4,22 @@
  * @flow
  */
 
-type Options = {
+export type Options = {
   test?: string | RegExp,
-  include?: string | Array<string>,
-  exclude?: string | Array<string>
+  include?: Array<string>,
+  exclude?: Array<string>
 }
 
-export default function choose({ test,
-                                 include = [],
-                                 exclude = [] }: Options = {}) {
+export default function choose({ test, include = [], exclude = [] }: Options = {}) {
   const call = test
-        ? ('[object RegExp]' === Object.prototype.toString.call(test)
-           ? (a => test.test(a))
-           : (a => a === String(test)))
-        : (() => true)
-
-  const inc = Array.isArray(include) ? include : [include]
-  const exc = Array.isArray(exclude) ? exclude : [exclude]
+        ? ('string' === typeof test
+           ? (a => a === String(test))
+           : (a => test.test(a)))
+        : (a => true)
 
   return function choose1(collects: Array<string>): Array<string> {
     return collects
-      .filter(coll => call(coll) && Boolean(!~exclude.indexOf(coll)))
+      .filter(item => call(item) && Boolean(!~exclude.indexOf(item)))
       .concat(include)
   }
 }
@@ -36,7 +31,7 @@ export default function choose({ test,
 
 import assert from 'assert'
 
-describe('choose', function() {
+describe('choose()', function() {
   it('should choose with default options', function() {
     assert.deepStrictEqual(
       choose()(['foo', 'bar']),
@@ -65,23 +60,9 @@ describe('choose', function() {
     )
   })
 
-  it('should choose with include with string type', function() {
-    assert.deepStrictEqual(
-      choose({ include: 'bar' })(['foo']),
-      ['foo', 'bar']
-    )
-  })
-
   it('should choose with exclude', function() {
     assert.deepStrictEqual(
       choose({ exclude: ['bar'] })(['foo', 'bar']),
-      ['foo']
-    )
-  })
-
-  it('should choose with exclude with string type', function() {
-    assert.deepStrictEqual(
-      choose({ exclude: 'bar' })(['foo', 'bar']),
       ['foo']
     )
   })
